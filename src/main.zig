@@ -5,26 +5,30 @@ const net = std.net;
 pub fn main() !void {
     std.log.info("Starting windowing system...", .{});
 
-    const sockfd = try posix.socket(
-        posix.AF.UNIX,
-        posix.SOCK.STREAM,
-        0,
-    );
-    errdefer net.Stream.close(.{ .handle = sockfd });
+    const stream = try net.connectUnixSocket("/tmp/.X11-unix/X1");
+    errdefer stream.close();
 
-    var sock_addr = posix.sockaddr.un{
-        .family = posix.AF.UNIX,
-        .path = undefined,
-    };
+    // Send the setup request
+    var setup_request = [_]u8{0} ** 12;
+    setup_request[0] = 0x6c; // Little-endian byte order
+    setup_request[2] = 11; // Protocol version
 
-    const path: []const u8 = "/tmp/.X11-unix/X1";
+    _ = try stream.write(&setup_request);
 
-    @memset(&sock_addr.path, 0);
-    @memcpy(sock_addr.path[0..path.len], path);
+    // Read the header (first 8 bytes) of the reply
+    var reply: [8]u8 = undefined;
+    _ = try stream.read(&reply);
+    std.debug.print("Reply: {x}\n", .{reply});
 
-    const address: posix.sockaddr = .{ .un = sock_addr };
-    const sock_size = @as(posix.socklen_t, @intCast(@sizeOf(posix.sockaddr.un)));
-    try posix.connect(sockfd, &address, sock_size);
-    // TODO: Lookup type-unions and any on Address
-    // try posix.connect(sockfd, &sock_addr.any, sock_addr.getOsSockLen());
+    // Check for success (first byte should be 1)
+    if (reply[0] == 1) {
+        std.log.info("Connected to X server", .{});
+    } else {
+        std.log.err("Failed to connect to X server", .{});
+    }
+
+    // _ = try stream.read(&reason);
+    // std.debug.print("Reason for failure: {s}\n", .{reason});
+
+    stream.close();
 }
