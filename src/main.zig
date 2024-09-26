@@ -22,6 +22,9 @@ pub fn main() !void {
     @memset(&sock_addr.path, 0);
     @memcpy(sock_addr.path[0..path.len], path);
 
+    const address: posix.sockaddr = .{ .un = sock_addr };
+    const sock_size = @as(posix.socklen_t, @intCast(@sizeOf(posix.sockaddr.un)));
+    try posix.connect(sockfd, &address, sock_size);
     // TODO: Lookup type-unions and any on Address
     // try posix.connect(sockfd, &sock_addr.any, sock_addr.getOsSockLen());
 }
