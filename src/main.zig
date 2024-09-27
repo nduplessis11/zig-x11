@@ -27,8 +27,5 @@ pub fn main() !void {
         std.log.err("Failed to connect to X server", .{});
     }
 
-    // _ = try stream.read(&reason);
-    // std.debug.print("Reason for failure: {s}\n", .{reason});
-
     stream.close();
 }
