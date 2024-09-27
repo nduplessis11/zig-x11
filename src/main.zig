@@ -10,7 +10,7 @@ pub fn main() !void {
 
     // Send the setup request
     var setup_request = [_]u8{0} ** 12;
-    setup_request[0] = 0x6c; // Little-endian byte order
+    setup_request[0] = 'l'; // Little-endian byte order
     setup_request[2] = 11; // Protocol version
 
     _ = try stream.write(&setup_request);
